@@ -17,6 +17,7 @@ struct ContentView: View {
         
         "front_delts": 60,
         "side_delts": 30,
+        "rear_delts": 60,
         
         "upper_abs": 20,
         "lower_abs": 10,
@@ -34,19 +35,24 @@ struct ContentView: View {
         "upper_traps": 50,
         "mid_traps": 40,
         "lower_traps": 30,
-        "rear_delts": 60,
         "teres_major": 50,
         "erector_spinae": 30
     ]
     
-    // 🔥 ГРУППЫ → МЫШЦЫ
+    // 🔥 ГРУППЫ (FRONT)
     let groups: [String: [String]] = [
-        "Chest": ["upper_pecs", "middle_pecs", "lower_pecs"],
-        "Arms": ["long_head_bicep", "short_head_bicep", "brachialis", "brachioradialis"],
-        "Shoulders": ["front_delts", "side_delts", "rear_delts"],
-        "Core": ["upper_abs", "lower_abs", "external_abdominal_obliques"],
-        "Legs": ["quads", "gastrocnemius", "tibialis_anterior", "adductors"],
-        "Back": ["upper_lats", "middle_lats", "lower_lats", "upper_traps", "mid_traps", "lower_traps", "teres_major", "erector_spinae"]
+        "chest": ["upper_pecs", "middle_pecs", "lower_pecs"],
+        "arms": ["long_head_bicep", "short_head_bicep", "brachialis", "brachioradialis"],
+        "shoulders": ["front_delts", "side_delts", "rear_delts"],
+        "core": ["upper_abs", "lower_abs", "external_abdominal_obliques"],
+        "legs": ["quads", "gastrocnemius", "tibialis_anterior", "adductors"]
+    ]
+    
+    // BACK пока как есть
+    let backMuscles: [String] = [
+        "upper_lats", "middle_lats", "lower_lats",
+        "upper_traps", "mid_traps", "lower_traps",
+        "teres_major", "erector_spinae"
     ]
     
     var body: some View {
@@ -72,9 +78,14 @@ struct ContentView: View {
                 
                 // 🔥 BODY
                 HStack {
-                    bodyView(base: "body_front_base", muscles: allFront())
-                    bodyView(base: "body_back_base", muscles: allBack())
+                    
+                    // FRONT (ГРУППЫ)
+                    frontView()
+                    
+                    // BACK (ПОКА ПРОСТО МЫШЦЫ)
+                    backView()
                 }
+                .padding()
                 
                 Spacer()
             }
@@ -87,56 +98,73 @@ struct ContentView: View {
     }
 }
 
-// MARK: - BODY
+// MARK: - FRONT VIEW (ГРУППЫ)
 
 extension ContentView {
     
-    func allFront() -> [String] {
-        groups.filter { $0.key != "Back" }.flatMap { $0.value }
-    }
-    
-    func allBack() -> [String] {
-        groups["Back"] ?? []
-    }
-    
-    func bodyView(base: String, muscles: [String]) -> some View {
+    func frontView() -> some View {
         ZStack {
-            Image(base)
+            
+            Image("body_front_base")
                 .resizable()
                 .scaledToFit()
             
-            ForEach(muscles, id: \.self) { muscle in
-                muscleView(muscle)
+            // 👉 каждая группа = 1 слой
+            ForEach(groups.keys.sorted(), id: \.self) { group in
+                groupLayer(group)
             }
         }
     }
     
-    func muscleView(_ name: String) -> some View {
-        let value = fatigue[name] ?? 0
+    func groupLayer(_ group: String) -> some View {
+        let muscles = groups[group] ?? []
         
-        return Image(name)
-            .renderingMode(.template)
-            .resizable()
-            .scaledToFit()
-            .foregroundColor(color(for: value))
-            .opacity(0.7)
+        return ZStack {
             
-            .onTapGesture {
-                selectedGroup = findGroup(for: name)
-            }
-    }
-    
-    func findGroup(for muscle: String) -> String {
-        for (group, muscles) in groups {
-            if muscles.contains(muscle) {
-                return group
-            }
+            // 🔲 КОНТУР
+            Image(group)
+                .resizable()
+                .scaledToFit()
+                .foregroundColor(.black)
+            
+            // 🎨 ЦВЕТ (среднее по группе)
+            Image(group)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .foregroundColor(color(for: avgFatigue(muscles)))
+                .opacity(0.7)
         }
-        return ""
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedGroup = group
+        }
     }
 }
 
-// MARK: - POPUP
+// MARK: - BACK VIEW
+
+extension ContentView {
+    
+    func backView() -> some View {
+        ZStack {
+            Image("body_back_base")
+                .resizable()
+                .scaledToFit()
+            
+            ForEach(backMuscles, id: \.self) { muscle in
+                Image(muscle)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundColor(color(for: fatigue[muscle] ?? 0))
+                    .opacity(0.7)
+            }
+        }
+    }
+}
+
+// MARK: - POPUP (С КАРТИНКОЙ)
 
 extension ContentView {
     
@@ -146,20 +174,28 @@ extension ContentView {
             
             VStack(spacing: 15) {
                 
-                Text(group)
+                Text(group.capitalized)
                     .font(.title)
-                    .fontWeight(.bold)
+                    .bold()
                 
-                // мышцы внутри
-                ForEach(groups[group] ?? [], id: \.self) { muscle in
-                    HStack {
-                        Text(muscle)
-                        Spacer()
-                        Circle()
-                            .fill(color(for: fatigue[muscle] ?? 0))
-                            .frame(width: 15, height: 15)
+                ZStack {
+                    
+                    // 👉 используем ТВОЙ файл (chest, arms, etc)
+                    Image(group)
+                        .resizable()
+                        .scaledToFit()
+                    
+                    // 👉 детальные мышцы
+                    ForEach(groups[group] ?? [], id: \.self) { muscle in
+                        Image(muscle)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .foregroundColor(color(for: fatigue[muscle] ?? 0))
+                            .opacity(0.9)
                     }
                 }
+                .frame(height: 220)
                 
                 Button("Close") {
                     selectedGroup = nil
@@ -178,6 +214,12 @@ extension ContentView {
 // MARK: - HELPERS
 
 extension ContentView {
+    
+    func avgFatigue(_ muscles: [String]) -> Int {
+        let values = muscles.compactMap { fatigue[$0] }
+        guard !values.isEmpty else { return 0 }
+        return values.reduce(0, +) / values.count
+    }
     
     func color(for fatigue: Int) -> Color {
         switch fatigue {
