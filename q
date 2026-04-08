@@ -4,7 +4,7 @@ struct ContentView: View {
     
     @State private var selectedGroup: String? = nil
     
-    // MARK: DATA
+    // MARK: - DATA
     
     let fatigue: [String: Int] = [
         "upper_pecs": 90, "middle_pecs": 70, "lower_pecs": 40,
@@ -17,6 +17,7 @@ struct ContentView: View {
         "teres_major": 50, "erector_spinae": 30
     ]
     
+    // мышца → группа
     let map: [String: String] = [
         "upper_pecs": "chest","middle_pecs": "chest","lower_pecs": "chest",
         "long_head_bicep": "arms","short_head_bicep": "arms","brachialis": "arms","brachioradialis": "arms",
@@ -47,6 +48,7 @@ struct ContentView: View {
             
             VStack {
                 
+                // HEADER
                 VStack(spacing: 4) {
                     Text("GYMES").font(.largeTitle).bold()
                     Text(date()).foregroundColor(.gray)
@@ -61,6 +63,7 @@ struct ContentView: View {
                 Spacer()
             }
             
+            // FULLSCREEN POPUP
             if let group = selectedGroup {
                 popup(group)
             }
@@ -68,7 +71,7 @@ struct ContentView: View {
     }
 }
 
-// MARK: FRONT
+// MARK: - FRONT
 
 extension ContentView {
     
@@ -78,6 +81,7 @@ extension ContentView {
                 .resizable()
                 .scaledToFit()
             
+            // 👉 порядок важен!
             ForEach(frontMuscles, id: \.self) { m in
                 muscle(m)
             }
@@ -89,11 +93,13 @@ extension ContentView {
         
         return ZStack {
             
+            // КОНТУР
             Image(name)
                 .resizable()
                 .scaledToFit()
                 .foregroundColor(.black)
             
+            // ЦВЕТ
             Image(name)
                 .renderingMode(.template)
                 .resizable()
@@ -101,20 +107,23 @@ extension ContentView {
                 .foregroundColor(color(value))
                 .opacity(0.85)
         }
-        // 🔥 ВАЖНО: кликаем по форме PNG
-        .contentShape(Image(name))
+        // 👇 ВАЖНО: решает проблему "всегда ноги"
+        .zIndex(Double(100 - (fatigue[name] ?? 0)))
+        
         .onTapGesture {
             selectedGroup = map[name]
         }
     }
 }
 
-// MARK: BACK
+// MARK: - BACK
 
 extension ContentView {
     
     func backView() -> some View {
         ZStack {
+            
+            // 👉 контур
             Image("back_base")
                 .resizable()
                 .scaledToFit()
@@ -131,7 +140,7 @@ extension ContentView {
     }
 }
 
-// MARK: POPUP
+// MARK: - POPUP
 
 extension ContentView {
     
@@ -155,6 +164,7 @@ extension ContentView {
                             .scaledToFit()
                             .frame(width: geo.size.width)
                         
+                        // 👉 только выбранная группа
                         ForEach(frontMuscles, id: \.self) { m in
                             if map[m] == group {
                                 Image(m)
@@ -166,7 +176,6 @@ extension ContentView {
                             }
                         }
                     }
-                    // 🔥 ЗУМ В ЗАВИСИМОСТИ ОТ ГРУППЫ
                     .scaleEffect(zoom(group))
                     .offset(offset(group, geo.size))
                 }
@@ -180,7 +189,7 @@ extension ContentView {
     }
 }
 
-// MARK: HELPERS
+// MARK: - HELPERS
 
 extension ContentView {
     
@@ -197,8 +206,6 @@ extension ContentView {
         f.dateStyle = .full
         return f.string(from: Date())
     }
-    
-    // 🔥 ЗУМ И СМЕЩЕНИЕ (подогнать можно потом)
     
     func zoom(_ group: String) -> CGFloat {
         switch group {
