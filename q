@@ -4,14 +4,12 @@ struct ContentView: View {
     
     @State private var selectedGroup: String? = nil
     
-    // MARK: DATA
-    
     let fatigue: [String: Int] = [
         "upper_pecs": 90, "middle_pecs": 70, "lower_pecs": 40,
-        "front_delts": 60, "side_delts": 30, "rear_delts": 50,
+        "front_delts": 60, "side_delts": 30,
         "upper_abs": 20, "lower_abs": 10,
         "quads": 80, "gastrocnemius": 30,
-        "upper_lats": 70, "middle_lats": 60, "lower_lats": 40
+        "upper_lats": 70, "middle_lats": 60
     ]
     
     let frontMuscles = [
@@ -22,8 +20,7 @@ struct ContentView: View {
     ]
     
     let backMuscles = [
-        "upper_lats","middle_lats","lower_lats",
-        "rear_delts"
+        "upper_lats","middle_lats"
     ]
     
     var body: some View {
@@ -31,7 +28,7 @@ struct ContentView: View {
             
             VStack(spacing: 10) {
                 
-                // 🔥 HEADER
+                // HEADER
                 VStack(spacing: 4) {
                     Text("GYMES")
                         .font(.largeTitle).bold()
@@ -43,16 +40,17 @@ struct ContentView: View {
                         .foregroundColor(.blue)
                 }
                 
-                // 🔥 BODY
+                // 🔥 ФИКСИРОВАННЫЙ КОНТЕЙНЕР
                 HStack {
                     
                     // FRONT
                     ZStack {
+                        
                         Image("body_front_base")
                             .resizable()
                             .scaledToFit()
                         
-                        // цвета мышц
+                        // цвета
                         ForEach(frontMuscles, id: \.self) { m in
                             Image(m)
                                 .renderingMode(.template)
@@ -62,9 +60,49 @@ struct ContentView: View {
                                 .opacity(0.85)
                         }
                         
-                        // 🔥 ЧЕТКИЕ HITBOX
-                        frontHitboxes()
+                        // 🔥 HITBOX (БЕЗ GeometryReader)
+                        
+                        // CHEST
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: 120, height: 80)
+                            .offset(x: 0, y: -120)
+                            .onTapGesture {
+                                print("CHEST")
+                                selectedGroup = "chest"
+                            }
+                        
+                        // SHOULDERS
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: 180, height: 60)
+                            .offset(x: 0, y: -180)
+                            .onTapGesture {
+                                print("SHOULDERS")
+                                selectedGroup = "shoulders"
+                            }
+                        
+                        // CORE
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: 100, height: 100)
+                            .offset(x: 0, y: -20)
+                            .onTapGesture {
+                                print("CORE")
+                                selectedGroup = "core"
+                            }
+                        
+                        // LEGS
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: 150, height: 200)
+                            .offset(x: 0, y: 150)
+                            .onTapGesture {
+                                print("LEGS")
+                                selectedGroup = "legs"
+                            }
                     }
+                    .frame(width: 200, height: 500) // 👈 важно
                     
                     // BACK
                     ZStack {
@@ -81,18 +119,18 @@ struct ContentView: View {
                                 .opacity(0.85)
                         }
                     }
+                    .frame(width: 200, height: 500)
                 }
-                .frame(height: 500) // 👈 фиксируем размер (ВАЖНО)
                 
                 Spacer()
             }
             
-            // 🔥 POPUP (ТОЧНО РАБОТАЕТ)
+            // 🔥 POPUP
             if let group = selectedGroup {
                 ZStack {
                     Color.black.opacity(0.4).ignoresSafeArea()
                     
-                    VStack(spacing: 20) {
+                    VStack {
                         Text(group.uppercased())
                             .font(.largeTitle)
                             .bold()
@@ -106,58 +144,6 @@ struct ContentView: View {
                     .cornerRadius(20)
                 }
             }
-        }
-    }
-}
-
-// MARK: - HITBOXES
-
-extension ContentView {
-    
-    func frontHitboxes() -> some View {
-        ZStack {
-            
-            // 🔴 CHEST (разбит)
-            Group {
-                box(0.5, 0.28, 0.30, 0.12, "chest")
-                box(0.5, 0.34, 0.28, 0.10, "chest")
-            }
-            
-            // 🔵 SHOULDERS
-            Group {
-                box(0.5, 0.20, 0.45, 0.10, "shoulders")
-            }
-            
-            // 🟢 ARMS (2 зоны)
-            Group {
-                box(0.20, 0.40, 0.18, 0.30, "arms")
-                box(0.80, 0.40, 0.18, 0.30, "arms")
-            }
-            
-            // 🟡 CORE
-            Group {
-                box(0.5, 0.48, 0.22, 0.20, "core")
-            }
-            
-            // 🟣 LEGS (2 зоны)
-            Group {
-                box(0.5, 0.70, 0.30, 0.25, "legs")
-                box(0.5, 0.88, 0.30, 0.20, "legs")
-            }
-        }
-    }
-    
-    // универсальный хитбокс
-    func box(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat, _ group: String) -> some View {
-        GeometryReader { geo in
-            Rectangle()
-                .fill(Color.clear)
-                .frame(width: geo.size.width * w, height: geo.size.height * h)
-                .position(x: geo.size.width * x, y: geo.size.height * y)
-                .onTapGesture {
-                    print("Tapped:", group)
-                    selectedGroup = group
-                }
         }
     }
 }
