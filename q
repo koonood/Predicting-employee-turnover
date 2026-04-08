@@ -40,17 +40,16 @@ struct ContentView: View {
                         .foregroundColor(.blue)
                 }
                 
-                // 🔥 ФИКСИРОВАННЫЙ КОНТЕЙНЕР
-                HStack {
+                HStack(spacing: 40) { // 👈 расстояние между front/back
                     
-                    // FRONT
+                    // 🔥 FRONT
                     ZStack {
                         
                         Image("body_front_base")
                             .resizable()
                             .scaledToFit()
+                            .allowsHitTesting(false) // 🔥 КЛЮЧ
                         
-                        // цвета
                         ForEach(frontMuscles, id: \.self) { m in
                             Image(m)
                                 .renderingMode(.template)
@@ -58,9 +57,10 @@ struct ContentView: View {
                                 .scaledToFit()
                                 .foregroundColor(color(fatigue[m] ?? 20))
                                 .opacity(0.85)
+                                .allowsHitTesting(false) // 🔥 КЛЮЧ
                         }
                         
-                        // 🔥 HITBOX (БЕЗ GeometryReader)
+                        // 🔥 HITBOX (ТЕПЕРЬ РАБОТАЮТ)
                         
                         // CHEST
                         Rectangle()
@@ -102,13 +102,15 @@ struct ContentView: View {
                                 selectedGroup = "legs"
                             }
                     }
-                    .frame(width: 200, height: 500) // 👈 важно
+                    .frame(width: 220, height: 500)
+                    .padding(.leading, 20) // 👈 ОТСТУП СЛЕВА
                     
-                    // BACK
+                    // 🔥 BACK
                     ZStack {
                         Image("back_base")
                             .resizable()
                             .scaledToFit()
+                            .allowsHitTesting(false) // 🔥 КЛЮЧ
                         
                         ForEach(backMuscles, id: \.self) { m in
                             Image(m)
@@ -117,20 +119,21 @@ struct ContentView: View {
                                 .scaledToFit()
                                 .foregroundColor(color(fatigue[m] ?? 20))
                                 .opacity(0.85)
+                                .allowsHitTesting(false) // 🔥 КЛЮЧ
                         }
                     }
-                    .frame(width: 200, height: 500)
+                    .frame(width: 220, height: 500)
                 }
                 
                 Spacer()
             }
             
-            // 🔥 POPUP
+            // 🔥 POPUP (ТЕПЕРЬ ТОЧНО РАБОТАЕТ)
             if let group = selectedGroup {
                 ZStack {
                     Color.black.opacity(0.4).ignoresSafeArea()
                     
-                    VStack {
+                    VStack(spacing: 20) {
                         Text(group.uppercased())
                             .font(.largeTitle)
                             .bold()
