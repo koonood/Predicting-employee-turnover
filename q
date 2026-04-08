@@ -8,8 +8,7 @@ struct ContentView: View {
         "upper_pecs": 90, "middle_pecs": 70, "lower_pecs": 40,
         "front_delts": 60, "side_delts": 30,
         "upper_abs": 20, "lower_abs": 10,
-        "quads": 80, "gastrocnemius": 30,
-        "upper_lats": 70, "middle_lats": 60
+        "quads": 80, "gastrocnemius": 30
     ]
     
     let frontMuscles = [
@@ -17,10 +16,6 @@ struct ContentView: View {
         "front_delts","side_delts",
         "upper_abs","lower_abs",
         "quads","gastrocnemius"
-    ]
-    
-    let backMuscles = [
-        "upper_lats","middle_lats"
     ]
     
     var body: some View {
@@ -40,98 +35,27 @@ struct ContentView: View {
                         .foregroundColor(.blue)
                 }
                 
-                HStack(spacing: 40) { // 👈 расстояние между front/back
+                // 🔥 MAIN AREA
+                ZStack {
                     
-                    // 🔥 FRONT
-                    ZStack {
-                        
-                        Image("body_front_base")
-                            .resizable()
-                            .scaledToFit()
-                            .allowsHitTesting(false) // 🔥 КЛЮЧ
-                        
-                        ForEach(frontMuscles, id: \.self) { m in
-                            Image(m)
-                                .renderingMode(.template)
-                                .resizable()
-                                .scaledToFit()
-                                .foregroundColor(color(fatigue[m] ?? 20))
-                                .opacity(0.85)
-                                .allowsHitTesting(false) // 🔥 КЛЮЧ
-                        }
-                        
-                        // 🔥 HITBOX (ТЕПЕРЬ РАБОТАЮТ)
-                        
-                        // CHEST
-                        Rectangle()
-                            .fill(Color.clear)
-                            .frame(width: 120, height: 80)
-                            .offset(x: 0, y: -120)
-                            .onTapGesture {
-                                print("CHEST")
-                                selectedGroup = "chest"
-                            }
-                        
-                        // SHOULDERS
-                        Rectangle()
-                            .fill(Color.clear)
-                            .frame(width: 180, height: 60)
-                            .offset(x: 0, y: -180)
-                            .onTapGesture {
-                                print("SHOULDERS")
-                                selectedGroup = "shoulders"
-                            }
-                        
-                        // CORE
-                        Rectangle()
-                            .fill(Color.clear)
-                            .frame(width: 100, height: 100)
-                            .offset(x: 0, y: -20)
-                            .onTapGesture {
-                                print("CORE")
-                                selectedGroup = "core"
-                            }
-                        
-                        // LEGS
-                        Rectangle()
-                            .fill(Color.clear)
-                            .frame(width: 150, height: 200)
-                            .offset(x: 0, y: 150)
-                            .onTapGesture {
-                                print("LEGS")
-                                selectedGroup = "legs"
-                            }
-                    }
-                    .frame(width: 220, height: 500)
-                    .padding(.leading, 20) // 👈 ОТСТУП СЛЕВА
+                    // 🔥 ВИЗУАЛ (НЕ ТРОГАЕТ КЛИКИ)
+                    visualLayer
+                        .allowsHitTesting(false)
                     
-                    // 🔥 BACK
-                    ZStack {
-                        Image("back_base")
-                            .resizable()
-                            .scaledToFit()
-                            .allowsHitTesting(false) // 🔥 КЛЮЧ
-                        
-                        ForEach(backMuscles, id: \.self) { m in
-                            Image(m)
-                                .renderingMode(.template)
-                                .resizable()
-                                .scaledToFit()
-                                .foregroundColor(color(fatigue[m] ?? 20))
-                                .opacity(0.85)
-                                .allowsHitTesting(false) // 🔥 КЛЮЧ
-                        }
-                    }
-                    .frame(width: 220, height: 500)
+                    // 🔥 КЛИКИ (ОТДЕЛЬНЫЙ СЛОЙ)
+                    hitboxLayer
                 }
+                .frame(width: 300, height: 600)
+                .offset(x: 60) // 👈 СДВИНУЛ ВПРАВО КАК ТЫ ХОТЕЛ
                 
                 Spacer()
             }
             
-            // 🔥 POPUP (ТЕПЕРЬ ТОЧНО РАБОТАЕТ)
+            // 🔥 POPUP (100% работает)
             if let group = selectedGroup {
                 ZStack {
-                    Color.black.opacity(0.4).ignoresSafeArea()
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
                     
                     VStack(spacing: 20) {
                         Text(group.uppercased())
@@ -146,6 +70,83 @@ struct ContentView: View {
                     .background(Color.white)
                     .cornerRadius(20)
                 }
+            }
+        }
+    }
+}
+
+// MARK: - VISUAL
+
+extension ContentView {
+    
+    var visualLayer: some View {
+        ZStack {
+            
+            Image("body_front_base")
+                .resizable()
+                .scaledToFit()
+            
+            ForEach(frontMuscles, id: \.self) { m in
+                Image(m)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundColor(color(fatigue[m] ?? 20))
+                    .opacity(0.85)
+            }
+        }
+    }
+}
+
+// MARK: - HITBOXES (ЖЁСТКО РАБОТАЮТ)
+
+extension ContentView {
+    
+    var hitboxLayer: some View {
+        ZStack {
+            
+            // 🔴 CHEST
+            Button(action: {
+                print("CHEST")
+                selectedGroup = "chest"
+            }) {
+                Rectangle()
+                    .fill(Color.red.opacity(0.2)) // 👈 ВИДНО ДЛЯ ТЕСТА
+                    .frame(width: 140, height: 90)
+                    .offset(x: 0, y: -150)
+            }
+            
+            // 🔵 SHOULDERS
+            Button(action: {
+                print("SHOULDERS")
+                selectedGroup = "shoulders"
+            }) {
+                Rectangle()
+                    .fill(Color.blue.opacity(0.2))
+                    .frame(width: 200, height: 60)
+                    .offset(x: 0, y: -220)
+            }
+            
+            // 🟡 CORE
+            Button(action: {
+                print("CORE")
+                selectedGroup = "core"
+            }) {
+                Rectangle()
+                    .fill(Color.yellow.opacity(0.2))
+                    .frame(width: 100, height: 120)
+                    .offset(x: 0, y: -20)
+            }
+            
+            // 🟣 LEGS
+            Button(action: {
+                print("LEGS")
+                selectedGroup = "legs"
+            }) {
+                Rectangle()
+                    .fill(Color.purple.opacity(0.2))
+                    .frame(width: 160, height: 250)
+                    .offset(x: 0, y: 180)
             }
         }
     }
