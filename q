@@ -4,7 +4,8 @@ struct ContentView: View {
     
     @State private var selectedGroup: String? = nil
     
-    // 🔥 fatigue
+    // MARK: - DATA
+    
     let fatigue: [String: Int] = [
         "upper_pecs": 90,
         "middle_pecs": 70,
@@ -28,6 +29,7 @@ struct ContentView: View {
         "tibialis_anterior": 15,
         "adductors": 25,
         
+        // BACK
         "upper_lats": 80,
         "middle_lats": 70,
         "lower_lats": 60,
@@ -38,8 +40,8 @@ struct ContentView: View {
         "erector_spinae": 30
     ]
     
-    // 🔥 МЫШЦА → ГРУППА (фикс бага с shoulders)
-    let muscleToGroup: [String: String] = [
+    // МЫШЦА → ГРУППА
+    let map: [String: String] = [
         "upper_pecs": "chest",
         "middle_pecs": "chest",
         "lower_pecs": "chest",
@@ -92,27 +94,23 @@ struct ContentView: View {
             VStack {
                 
                 // HEADER
-                VStack(spacing: 5) {
-                    Text("GYMES")
-                        .font(.largeTitle).bold()
-                    
-                    Text(formattedDate())
-                        .foregroundColor(.gray)
-                    
-                    Text("Chest Day")
-                        .foregroundColor(.blue)
+                VStack(spacing: 4) {
+                    Text("GYMES").font(.largeTitle).bold()
+                    Text(date()).foregroundColor(.gray)
+                    Text("Chest Day").foregroundColor(.blue)
                 }
                 
                 HStack {
                     bodyView(base: "body_front_base", muscles: frontMuscles)
-                    bodyView(base: "body_back_base", muscles: backMuscles)
+                    backView()
                 }
                 
                 Spacer()
             }
             
+            // FULLSCREEN POPUP
             if let group = selectedGroup {
-                popup(group)
+                fullScreenPopup(group)
             }
         }
     }
@@ -124,84 +122,104 @@ extension ContentView {
     
     func bodyView(base: String, muscles: [String]) -> some View {
         ZStack {
-            
             Image(base)
                 .resizable()
                 .scaledToFit()
             
             ForEach(muscles, id: \.self) { m in
-                muscleView(m)
+                muscle(m)
             }
         }
     }
     
-    func muscleView(_ name: String) -> some View {
+    func muscle(_ name: String) -> some View {
         let value = fatigue[name] ?? 0
         
         return ZStack {
             
-            // 🔲 КОНТУР (фикс back)
+            // КОНТУР
             Image(name)
                 .resizable()
                 .scaledToFit()
                 .foregroundColor(.black)
-                .opacity(1)
             
-            // 🎨 ЦВЕТ
+            // ЦВЕТ
             Image(name)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
-                .foregroundColor(color(for: value))
+                .foregroundColor(color(value))
                 .opacity(0.8)
         }
-        .contentShape(Rectangle())
         .onTapGesture {
-            selectedGroup = muscleToGroup[name]
+            selectedGroup = map[name]
         }
     }
 }
 
-// MARK: - POPUP (НОВЫЙ)
+// MARK: - BACK
 
 extension ContentView {
     
-    func popup(_ group: String) -> some View {
-        VStack {
-            Spacer()
+    func backView() -> some View {
+        ZStack {
             
-            ZStack {
-                
-                // 🔥 ЗУМ НА ОБЛАСТЬ
-                Image("body_front_base")
+            // 👉 ТВОЙ КОНТУР СПИНЫ
+            Image("back_base")
+                .resizable()
+                .scaledToFit()
+            
+            ForEach(backMuscles, id: \.self) { m in
+                Image(m)
+                    .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .scaleEffect(scale(for: group))
-                    .offset(offset(for: group))
-                
-                // 🔥 мышцы
-                ForEach(frontMuscles, id: \.self) { m in
-                    if muscleToGroup[m] == group {
-                        Image(m)
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .scaleEffect(scale(for: group))
-                            .offset(offset(for: group))
-                            .foregroundColor(color(for: fatigue[m] ?? 0))
-                    }
-                }
-            }
-            .frame(height: 300)
-            .background(Color.white)
-            .cornerRadius(20)
-            .padding()
-            
-            Button("Close") {
-                selectedGroup = nil
+                    .foregroundColor(color(fatigue[m] ?? 0))
+                    .opacity(0.8)
             }
         }
-        .background(Color.black.opacity(0.4))
+    }
+}
+
+// MARK: - FULLSCREEN POPUP
+
+extension ContentView {
+    
+    func fullScreenPopup(_ group: String) -> some View {
+        ZStack {
+            
+            Color.white.ignoresSafeArea()
+            
+            VStack {
+                
+                Text(group.uppercased())
+                    .font(.largeTitle)
+                    .bold()
+                
+                ZStack {
+                    
+                    Image("body_front_base")
+                        .resizable()
+                        .scaledToFit()
+                    
+                    // 👉 ТОЛЬКО нужная группа
+                    ForEach(frontMuscles, id: \.self) { m in
+                        if map[m] == group {
+                            Image(m)
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundColor(color(fatigue[m] ?? 0))
+                        }
+                    }
+                }
+                
+                Button("Close") {
+                    selectedGroup = nil
+                }
+                .padding()
+            }
+        }
     }
 }
 
@@ -209,7 +227,7 @@ extension ContentView {
 
 extension ContentView {
     
-    func color(for f: Int) -> Color {
+    func color(_ f: Int) -> Color {
         switch f {
         case 75...100: return .red
         case 40..<75: return .yellow
@@ -217,33 +235,9 @@ extension ContentView {
         }
     }
     
-    func formattedDate() -> String {
+    func date() -> String {
         let f = DateFormatter()
         f.dateStyle = .full
         return f.string(from: Date())
-    }
-    
-    // 🔥 ЗУМ ПОД ОБЛАСТЬ
-    
-    func scale(for group: String) -> CGFloat {
-        switch group {
-        case "chest": return 2.0
-        case "arms": return 1.8
-        case "legs": return 1.6
-        case "core": return 2.0
-        case "shoulders": return 2.2
-        default: return 1.5
-        }
-    }
-    
-    func offset(for group: String) -> CGSize {
-        switch group {
-        case "chest": return CGSize(width: 0, height: -120)
-        case "arms": return CGSize(width: 0, height: -80)
-        case "legs": return CGSize(width: 0, height: 150)
-        case "core": return CGSize(width: 0, height: 0)
-        case "shoulders": return CGSize(width: 0, height: -160)
-        default: return .zero
-        }
     }
 }
