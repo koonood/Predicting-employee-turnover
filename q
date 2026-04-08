@@ -4,7 +4,7 @@ struct ContentView: View {
     
     @State private var selectedGroup: String? = nil
     
-    // 🔥 FATIGUE
+    // 🔥 fatigue
     let fatigue: [String: Int] = [
         "upper_pecs": 90,
         "middle_pecs": 70,
@@ -28,7 +28,6 @@ struct ContentView: View {
         "tibialis_anterior": 15,
         "adductors": 25,
         
-        // BACK
         "upper_lats": 80,
         "middle_lats": 70,
         "lower_lats": 60,
@@ -39,20 +38,52 @@ struct ContentView: View {
         "erector_spinae": 30
     ]
     
-    // 🔥 ГРУППЫ (FRONT)
-    let groups: [String: [String]] = [
-        "chest": ["upper_pecs", "middle_pecs", "lower_pecs"],
-        "arms": ["long_head_bicep", "short_head_bicep", "brachialis", "brachioradialis"],
-        "shoulders": ["front_delts", "side_delts", "rear_delts"],
-        "core": ["upper_abs", "lower_abs", "external_abdominal_obliques"],
-        "legs": ["quads", "gastrocnemius", "tibialis_anterior", "adductors"]
+    // 🔥 МЫШЦА → ГРУППА (фикс бага с shoulders)
+    let muscleToGroup: [String: String] = [
+        "upper_pecs": "chest",
+        "middle_pecs": "chest",
+        "lower_pecs": "chest",
+        
+        "long_head_bicep": "arms",
+        "short_head_bicep": "arms",
+        "brachialis": "arms",
+        "brachioradialis": "arms",
+        
+        "front_delts": "shoulders",
+        "side_delts": "shoulders",
+        "rear_delts": "shoulders",
+        
+        "upper_abs": "core",
+        "lower_abs": "core",
+        "external_abdominal_obliques": "core",
+        
+        "quads": "legs",
+        "gastrocnemius": "legs",
+        "tibialis_anterior": "legs",
+        "adductors": "legs",
+        
+        "upper_lats": "back",
+        "middle_lats": "back",
+        "lower_lats": "back",
+        "upper_traps": "back",
+        "mid_traps": "back",
+        "lower_traps": "back",
+        "teres_major": "back",
+        "erector_spinae": "back"
     ]
     
-    // BACK пока как есть
-    let backMuscles: [String] = [
-        "upper_lats", "middle_lats", "lower_lats",
-        "upper_traps", "mid_traps", "lower_traps",
-        "teres_major", "erector_spinae"
+    let frontMuscles = [
+        "upper_pecs","middle_pecs","lower_pecs",
+        "long_head_bicep","short_head_bicep","brachialis","brachioradialis",
+        "front_delts","side_delts",
+        "upper_abs","lower_abs","external_abdominal_obliques",
+        "quads","gastrocnemius","tibialis_anterior","adductors"
+    ]
+    
+    let backMuscles = [
+        "upper_lats","middle_lats","lower_lats",
+        "upper_traps","mid_traps","lower_traps",
+        "rear_delts","teres_major","erector_spinae"
     ]
     
     var body: some View {
@@ -60,152 +91,115 @@ struct ContentView: View {
             
             VStack {
                 
-                // 🔥 HEADER
+                // HEADER
                 VStack(spacing: 5) {
                     Text("GYMES")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                        .font(.largeTitle).bold()
                     
                     Text(formattedDate())
-                        .font(.subheadline)
                         .foregroundColor(.gray)
                     
                     Text("Chest Day")
-                        .font(.headline)
                         .foregroundColor(.blue)
                 }
-                .padding(.top)
                 
-                // 🔥 BODY
                 HStack {
-                    
-                    // FRONT (ГРУППЫ)
-                    frontView()
-                    
-                    // BACK (ПОКА ПРОСТО МЫШЦЫ)
-                    backView()
+                    bodyView(base: "body_front_base", muscles: frontMuscles)
+                    bodyView(base: "body_back_base", muscles: backMuscles)
                 }
-                .padding()
                 
                 Spacer()
             }
             
-            // 🔥 POPUP
             if let group = selectedGroup {
-                popupView(group)
+                popup(group)
             }
         }
     }
 }
 
-// MARK: - FRONT VIEW (ГРУППЫ)
+// MARK: - BODY
 
 extension ContentView {
     
-    func frontView() -> some View {
+    func bodyView(base: String, muscles: [String]) -> some View {
         ZStack {
             
-            Image("body_front_base")
+            Image(base)
                 .resizable()
                 .scaledToFit()
             
-            // 👉 каждая группа = 1 слой
-            ForEach(groups.keys.sorted(), id: \.self) { group in
-                groupLayer(group)
+            ForEach(muscles, id: \.self) { m in
+                muscleView(m)
             }
         }
     }
     
-    func groupLayer(_ group: String) -> some View {
-        let muscles = groups[group] ?? []
+    func muscleView(_ name: String) -> some View {
+        let value = fatigue[name] ?? 0
         
         return ZStack {
             
-            // 🔲 КОНТУР
-            Image(group)
+            // 🔲 КОНТУР (фикс back)
+            Image(name)
                 .resizable()
                 .scaledToFit()
                 .foregroundColor(.black)
+                .opacity(1)
             
-            // 🎨 ЦВЕТ (среднее по группе)
-            Image(group)
+            // 🎨 ЦВЕТ
+            Image(name)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
-                .foregroundColor(color(for: avgFatigue(muscles)))
-                .opacity(0.7)
+                .foregroundColor(color(for: value))
+                .opacity(0.8)
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            selectedGroup = group
+            selectedGroup = muscleToGroup[name]
         }
     }
 }
 
-// MARK: - BACK VIEW
+// MARK: - POPUP (НОВЫЙ)
 
 extension ContentView {
     
-    func backView() -> some View {
-        ZStack {
-            Image("body_back_base")
-                .resizable()
-                .scaledToFit()
-            
-            ForEach(backMuscles, id: \.self) { muscle in
-                Image(muscle)
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .foregroundColor(color(for: fatigue[muscle] ?? 0))
-                    .opacity(0.7)
-            }
-        }
-    }
-}
-
-// MARK: - POPUP (С КАРТИНКОЙ)
-
-extension ContentView {
-    
-    func popupView(_ group: String) -> some View {
+    func popup(_ group: String) -> some View {
         VStack {
             Spacer()
             
-            VStack(spacing: 15) {
+            ZStack {
                 
-                Text(group.capitalized)
-                    .font(.title)
-                    .bold()
+                // 🔥 ЗУМ НА ОБЛАСТЬ
+                Image("body_front_base")
+                    .resizable()
+                    .scaledToFit()
+                    .scaleEffect(scale(for: group))
+                    .offset(offset(for: group))
                 
-                ZStack {
-                    
-                    // 👉 используем ТВОЙ файл (chest, arms, etc)
-                    Image(group)
-                        .resizable()
-                        .scaledToFit()
-                    
-                    // 👉 детальные мышцы
-                    ForEach(groups[group] ?? [], id: \.self) { muscle in
-                        Image(muscle)
+                // 🔥 мышцы
+                ForEach(frontMuscles, id: \.self) { m in
+                    if muscleToGroup[m] == group {
+                        Image(m)
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
-                            .foregroundColor(color(for: fatigue[muscle] ?? 0))
-                            .opacity(0.9)
+                            .scaleEffect(scale(for: group))
+                            .offset(offset(for: group))
+                            .foregroundColor(color(for: fatigue[m] ?? 0))
                     }
                 }
-                .frame(height: 220)
-                
-                Button("Close") {
-                    selectedGroup = nil
-                }
             }
-            .padding()
+            .frame(height: 300)
             .background(Color.white)
             .cornerRadius(20)
-            .shadow(radius: 10)
             .padding()
+            
+            Button("Close") {
+                selectedGroup = nil
+            }
         }
         .background(Color.black.opacity(0.4))
     }
@@ -215,14 +209,8 @@ extension ContentView {
 
 extension ContentView {
     
-    func avgFatigue(_ muscles: [String]) -> Int {
-        let values = muscles.compactMap { fatigue[$0] }
-        guard !values.isEmpty else { return 0 }
-        return values.reduce(0, +) / values.count
-    }
-    
-    func color(for fatigue: Int) -> Color {
-        switch fatigue {
+    func color(for f: Int) -> Color {
+        switch f {
         case 75...100: return .red
         case 40..<75: return .yellow
         default: return .green
@@ -230,8 +218,32 @@ extension ContentView {
     }
     
     func formattedDate() -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .full
-        return formatter.string(from: Date())
+        let f = DateFormatter()
+        f.dateStyle = .full
+        return f.string(from: Date())
+    }
+    
+    // 🔥 ЗУМ ПОД ОБЛАСТЬ
+    
+    func scale(for group: String) -> CGFloat {
+        switch group {
+        case "chest": return 2.0
+        case "arms": return 1.8
+        case "legs": return 1.6
+        case "core": return 2.0
+        case "shoulders": return 2.2
+        default: return 1.5
+        }
+    }
+    
+    func offset(for group: String) -> CGSize {
+        switch group {
+        case "chest": return CGSize(width: 0, height: -120)
+        case "arms": return CGSize(width: 0, height: -80)
+        case "legs": return CGSize(width: 0, height: 150)
+        case "core": return CGSize(width: 0, height: 0)
+        case "shoulders": return CGSize(width: 0, height: -160)
+        default: return .zero
+        }
     }
 }
