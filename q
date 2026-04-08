@@ -1,65 +1,101 @@
 import SwiftUI
-import UIKit
 
-struct AlphaHitView: UIViewRepresentable {
+struct ContentView: View {
     
-    let imageName: String
-    let onTap: () -> Void
+    @State private var selectedGroup: String? = nil
     
-    func makeUIView(context: Context) -> UIImageView {
-        let imageView = UIImageView()
-        imageView.image = UIImage(named: imageName)
-        imageView.isUserInteractionEnabled = true
-        
-        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
-        imageView.addGestureRecognizer(tap)
-        
-        return imageView
-    }
-    
-    func updateUIView(_ uiView: UIImageView, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject {
-        let parent: AlphaHitView
-        
-        init(_ parent: AlphaHitView) {
-            self.parent = parent
-        }
-        
-        @objc func handleTap(_ sender: UITapGestureRecognizer) {
-            guard let view = sender.view as? UIImageView,
-                  let image = view.image else { return }
+    var body: some View {
+        ZStack {
             
-            let location = sender.location(in: view)
+            VStack {
+                
+                Text("GYMES")
+                    .font(.largeTitle)
+                    .bold()
+                
+                GeometryReader { geo in
+                    
+                    let w = geo.size.width
+                    let h = geo.size.height
+                    
+                    ZStack {
+                        
+                        // 🔥 ТВОЯ БАЗА
+                        Image("body_front_base")
+                            .resizable()
+                            .scaledToFit()
+                        
+                        // 🔥 HITBOXES (ПОДОГНАНЫ)
+                        
+                        // 🟥 CHEST
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: w * 0.32, height: h * 0.16)
+                            .position(x: w * 0.5, y: h * 0.30)
+                            .onTapGesture { selectedGroup = "chest" }
+                        
+                        // 🟦 SHOULDERS
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: w * 0.50, height: h * 0.12)
+                            .position(x: w * 0.5, y: h * 0.20)
+                            .onTapGesture { selectedGroup = "shoulders" }
+                        
+                        // 🟩 ARMS (левая+правая)
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: w * 0.75, height: h * 0.35)
+                            .position(x: w * 0.5, y: h * 0.40)
+                            .onTapGesture { selectedGroup = "arms" }
+                        
+                        // 🟨 CORE
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: w * 0.25, height: h * 0.22)
+                            .position(x: w * 0.5, y: h * 0.48)
+                            .onTapGesture { selectedGroup = "core" }
+                        
+                        // 🟪 LEGS
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: w * 0.40, height: h * 0.40)
+                            .position(x: w * 0.5, y: h * 0.75)
+                            .onTapGesture { selectedGroup = "legs" }
+                    }
+                }
+                
+                Spacer()
+            }
             
-            if isPixelOpaque(at: location, in: view, image: image) {
-                parent.onTap()
+            if let group = selectedGroup {
+                popup(group)
             }
         }
-        
-        func isPixelOpaque(at point: CGPoint, in view: UIImageView, image: UIImage) -> Bool {
-            guard let cgImage = image.cgImage else { return false }
+    }
+}
+
+// MARK: - POPUP
+
+extension ContentView {
+    
+    func popup(_ group: String) -> some View {
+        ZStack {
+            Color.white.ignoresSafeArea()
             
-            let size = view.bounds.size
-            
-            let x = Int(point.x * CGFloat(cgImage.width) / size.width)
-            let y = Int(point.y * CGFloat(cgImage.height) / size.height)
-            
-            guard x >= 0, y >= 0, x < cgImage.width, y < cgImage.height else { return false }
-            
-            let pixelData = cgImage.dataProvider?.data
-            let data: UnsafePointer<UInt8> = CFDataGetBytePtr(pixelData)
-            
-            let bytesPerPixel = 4
-            let index = (cgImage.width * y + x) * bytesPerPixel
-            
-            let alpha = data?[index + 3] ?? 0
-            
-            return alpha > 10
+            VStack {
+                Text(group.uppercased())
+                    .font(.largeTitle)
+                    .bold()
+                
+                Image("body_front_base")
+                    .resizable()
+                    .scaledToFit()
+                
+                Button("Close") {
+                    selectedGroup = nil
+                }
+                .padding()
+            }
         }
     }
 }
