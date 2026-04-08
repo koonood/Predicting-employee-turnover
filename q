@@ -4,25 +4,14 @@ struct ContentView: View {
     
     @State private var selectedGroup: String? = nil
     
-    // 🔥 FATIGUE (для цвета)
+    // MARK: DATA
+    
     let fatigue: [String: Int] = [
-        "upper_pecs": 90,
-        "middle_pecs": 70,
-        "lower_pecs": 40,
-        
-        "front_delts": 60,
-        "side_delts": 30,
-        "rear_delts": 50,
-        
-        "upper_abs": 20,
-        "lower_abs": 10,
-        
-        "quads": 80,
-        "gastrocnemius": 30,
-        
-        "upper_lats": 70,
-        "middle_lats": 60,
-        "lower_lats": 40
+        "upper_pecs": 90, "middle_pecs": 70, "lower_pecs": 40,
+        "front_delts": 60, "side_delts": 30, "rear_delts": 50,
+        "upper_abs": 20, "lower_abs": 10,
+        "quads": 80, "gastrocnemius": 30,
+        "upper_lats": 70, "middle_lats": 60, "lower_lats": 40
     ]
     
     let frontMuscles = [
@@ -40,75 +29,70 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             
-            VStack {
+            VStack(spacing: 10) {
                 
-                // HEADER
-                VStack {
+                // 🔥 HEADER
+                VStack(spacing: 4) {
                     Text("GYMES")
-                        .font(.largeTitle)
-                        .bold()
+                        .font(.largeTitle).bold()
                     
-                    Text("Test Mode")
+                    Text(date())
+                        .foregroundColor(.gray)
+                    
+                    Text("Chest Day")
                         .foregroundColor(.blue)
                 }
                 
-                GeometryReader { geo in
+                // 🔥 BODY
+                HStack {
                     
-                    let w = geo.size.width
-                    let h = geo.size.height
-                    
-                    HStack {
+                    // FRONT
+                    ZStack {
+                        Image("body_front_base")
+                            .resizable()
+                            .scaledToFit()
                         
-                        // 🔥 FRONT
-                        ZStack {
-                            Image("body_front_base")
+                        // цвета мышц
+                        ForEach(frontMuscles, id: \.self) { m in
+                            Image(m)
+                                .renderingMode(.template)
                                 .resizable()
                                 .scaledToFit()
-                            
-                            // 👉 ЦВЕТА ВЕРНУЛИ
-                            ForEach(frontMuscles, id: \.self) { m in
-                                Image(m)
-                                    .renderingMode(.template)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .foregroundColor(color(fatigue[m] ?? 20))
-                                    .opacity(0.85)
-                            }
-                            
-                            // 👉 ХИТБОКСЫ
-                            frontHitboxes(w: w/2, h: h)
+                                .foregroundColor(color(fatigue[m] ?? 20))
+                                .opacity(0.85)
                         }
                         
-                        // 🔥 BACK
-                        ZStack {
-                            Image("back_base")
+                        // 🔥 ЧЕТКИЕ HITBOX
+                        frontHitboxes()
+                    }
+                    
+                    // BACK
+                    ZStack {
+                        Image("back_base")
+                            .resizable()
+                            .scaledToFit()
+                        
+                        ForEach(backMuscles, id: \.self) { m in
+                            Image(m)
+                                .renderingMode(.template)
                                 .resizable()
                                 .scaledToFit()
-                            
-                            ForEach(backMuscles, id: \.self) { m in
-                                Image(m)
-                                    .renderingMode(.template)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .foregroundColor(color(fatigue[m] ?? 20))
-                                    .opacity(0.85)
-                            }
+                                .foregroundColor(color(fatigue[m] ?? 20))
+                                .opacity(0.85)
                         }
                     }
                 }
+                .frame(height: 500) // 👈 фиксируем размер (ВАЖНО)
                 
                 Spacer()
             }
             
-            // 🔥 POPUP (ТЕПЕРЬ ВСЕГДА ВИДЕН)
+            // 🔥 POPUP (ТОЧНО РАБОТАЕТ)
             if let group = selectedGroup {
                 ZStack {
-                    Color.black.opacity(0.5).ignoresSafeArea()
+                    Color.black.opacity(0.4).ignoresSafeArea()
                     
-                    VStack {
-                        Text("SELECTED:")
-                            .font(.headline)
-                        
+                    VStack(spacing: 20) {
                         Text(group.uppercased())
                             .font(.largeTitle)
                             .bold()
@@ -116,7 +100,6 @@ struct ContentView: View {
                         Button("Close") {
                             selectedGroup = nil
                         }
-                        .padding()
                     }
                     .padding()
                     .background(Color.white)
@@ -131,53 +114,55 @@ struct ContentView: View {
 
 extension ContentView {
     
-    func frontHitboxes(w: CGFloat, h: CGFloat) -> some View {
+    func frontHitboxes() -> some View {
         ZStack {
             
-            // 🟥 CHEST
-            Rectangle()
-                .fill(Color.clear)
-                .frame(width: w * 0.4, height: h * 0.18)
-                .position(x: w * 0.5, y: h * 0.30)
-                .onTapGesture {
-                    print("CHEST TAP")
-                    selectedGroup = "chest"
-                }
+            // 🔴 CHEST (разбит)
+            Group {
+                box(0.5, 0.28, 0.30, 0.12, "chest")
+                box(0.5, 0.34, 0.28, 0.10, "chest")
+            }
             
-            // 🟦 SHOULDERS
-            Rectangle()
-                .fill(Color.clear)
-                .frame(width: w * 0.5, height: h * 0.12)
-                .position(x: w * 0.5, y: h * 0.20)
-                .onTapGesture {
-                    print("SHOULDERS TAP")
-                    selectedGroup = "shoulders"
-                }
+            // 🔵 SHOULDERS
+            Group {
+                box(0.5, 0.20, 0.45, 0.10, "shoulders")
+            }
             
-            // 🟨 CORE
-            Rectangle()
-                .fill(Color.clear)
-                .frame(width: w * 0.25, height: h * 0.22)
-                .position(x: w * 0.5, y: h * 0.45)
-                .onTapGesture {
-                    print("CORE TAP")
-                    selectedGroup = "core"
-                }
+            // 🟢 ARMS (2 зоны)
+            Group {
+                box(0.20, 0.40, 0.18, 0.30, "arms")
+                box(0.80, 0.40, 0.18, 0.30, "arms")
+            }
             
-            // 🟪 LEGS
+            // 🟡 CORE
+            Group {
+                box(0.5, 0.48, 0.22, 0.20, "core")
+            }
+            
+            // 🟣 LEGS (2 зоны)
+            Group {
+                box(0.5, 0.70, 0.30, 0.25, "legs")
+                box(0.5, 0.88, 0.30, 0.20, "legs")
+            }
+        }
+    }
+    
+    // универсальный хитбокс
+    func box(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat, _ group: String) -> some View {
+        GeometryReader { geo in
             Rectangle()
                 .fill(Color.clear)
-                .frame(width: w * 0.4, height: h * 0.4)
-                .position(x: w * 0.5, y: h * 0.75)
+                .frame(width: geo.size.width * w, height: geo.size.height * h)
+                .position(x: geo.size.width * x, y: geo.size.height * y)
                 .onTapGesture {
-                    print("LEGS TAP")
-                    selectedGroup = "legs"
+                    print("Tapped:", group)
+                    selectedGroup = group
                 }
         }
     }
 }
 
-// MARK: - COLOR
+// MARK: - HELPERS
 
 extension ContentView {
     
@@ -187,5 +172,11 @@ extension ContentView {
         case 40..<75: return .yellow
         default: return .green
         }
+    }
+    
+    func date() -> String {
+        let f = DateFormatter()
+        f.dateStyle = .full
+        return f.string(from: Date())
     }
 }
